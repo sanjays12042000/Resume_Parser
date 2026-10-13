@@ -1,1 +1,2 @@
 i want build a html css js landing page for my  resume parser ,where i upload pdf file and get thescore out of it ,and here i get the score and what skils ae preset ,what skils are missing for im  go to call rusme parser ,this for moock design so just build a html css js ,no backend server is needed
+i want make this web for REACT  website
