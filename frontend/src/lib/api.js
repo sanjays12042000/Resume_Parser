@@ -2,10 +2,11 @@ export async function analyzeResume(file, jobDescription) {
   const formData = new FormData();
   formData.append("resume", file);
   formData.append("jobDescription", jobDescription);
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "";
 
   let response;
   try {
-    response = await fetch("/api/analyze", {
+    response = await fetch(`${apiBaseUrl}/api/analyze`, {
       method: "POST",
       body: formData
     });
