@@ -16,8 +16,9 @@ export default function Results({ analysis }) {
       </article>
 
       <p className="disclaimer">
-        This version uses keyword matching and resume-structure checks. AI analysis will be added
-        later. {analysis.saved
+        {analysis.engine === "labd-ai-v1"
+          ? "AI-assisted job and resume comparison with resume-structure checks."
+          : "Keyword matching and resume-structure checks are being used. Set LABD_API_KEY on the backend to enable AI analysis."} {analysis.saved
           ? "This analysis was saved to MongoDB."
           : "MongoDB is unavailable, so this analysis was not saved."}
       </p>

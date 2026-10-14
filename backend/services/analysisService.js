@@ -2,6 +2,8 @@ import { dbStatus } from "../src/config/db.js";
 import { analyzeResume } from "../src/lib/scoring.js";
 import { Analysis } from "../src/models/Analysis.js";
 import { extractPdfText, httpError } from "../utils.js";
+import { config } from "../src/config/env.js";
+import { analyzeWithLabd } from "./labdService.js";
 
 export async function analyzeUploadedResume({ file, jobDescription }) {
   if (!file) {
@@ -31,7 +33,9 @@ export async function analyzeUploadedResume({ file, jobDescription }) {
     );
   }
 
-  const analysis = analyzeResume(resumeText, normalizedJobDescription);
+  const analysis = config.labdApiKey
+    ? await analyzeWithLabd(resumeText, normalizedJobDescription)
+    : analyzeResume(resumeText, normalizedJobDescription);
   let saved = false;
 
   if (dbStatus() === "connected") {
