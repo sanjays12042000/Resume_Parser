@@ -1,0 +1,21 @@
+{
+  "name": "resumeiq-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Express API for ResumeIQ: takes a PDF resume plus a job description and returns a match analysis.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "check": "node scripts/check-scoring.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1",
+    "multer": "^2.0.2",
+    "pdfjs-dist": "^4.0.379"
+  }
+}
