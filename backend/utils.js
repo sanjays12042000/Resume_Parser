@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 export function httpError(message, statusCode) {
   const error = new Error(message);
   error.statusCode = statusCode;
@@ -11,7 +13,12 @@ export async function extractPdfText(buffer) {
     const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
     pdf = await pdfjs.getDocument({
       data: new Uint8Array(buffer),
-      standardFontDataUrl: new URL("./node_modules/pdfjs-dist/standard_fonts/", import.meta.url).href
+      standardFontDataUrl: fileURLToPath(
+        new URL(
+          "../../standard_fonts/",
+          import.meta.resolve("pdfjs-dist/legacy/build/pdf.mjs")
+        )
+      )
     }).promise;
 
     const pages = [];
@@ -22,7 +29,8 @@ export async function extractPdfText(buffer) {
     }
 
     return pages.join("\n");
-  } catch {
+  } catch (error) {
+    console.error("[api] PDF extraction failed:", error);
     throw httpError("The uploaded PDF could not be read.", 422);
   } finally {
     if (pdf) {
