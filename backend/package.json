@@ -3,6 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "description": "Express API for ResumeIQ: takes a PDF resume plus a job description and returns a match analysis.",
   "main": "server.js",
   "scripts": {
