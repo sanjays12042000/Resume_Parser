@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { dirname, join, sep } from "node:path";
 import { pathToFileURL } from "node:url";
+import { existsSync } from "node:fs";
 
 export function httpError(message, statusCode) {
   const error = new Error(message);
@@ -11,13 +12,10 @@ export function httpError(message, statusCode) {
 /**
  * Load pdf.js, and work out where its standard fonts live.
  *
- * Two things make this fiddly on a serverless host, and both are reasons a
- * deployed build can fail where a local run succeeds:
- *  - pdfjs-dist ships no "exports" map, so resolving the bare specifier
- *    "pdfjs-dist/legacy/build/pdf.mjs" can fail on some Node versions.
- *    createRequire uses classic Node resolution, which does not care.
- *  - the fonts are read off disk while parsing, so this has to be a real
- *    filesystem path, not a file:// URL.
+ * Resolution goes through createRequire rather than import.meta.resolve,
+ * because pdfjs-dist ships no "exports" map: resolving the bare specifier
+ * "pdfjs-dist/legacy/build/pdf.mjs" can fail outright on some Node versions,
+ * including the runtime a serverless host picks.
  */
 let pdfjsPromise;
 
@@ -31,12 +29,35 @@ function loadPdfjs() {
       // entry is .../pdfjs-dist/legacy/build/pdf.mjs, so two levels up is the
       // package root. The trailing separator matters: pdf.js treats this as a
       // prefix it appends font file names to.
-      const standardFontDataUrl = join(dirname(entry), "..", "..", "standard_fonts") + sep;
+      const fontsDir = join(dirname(entry), "..", "..", "standard_fonts");
+      const standardFontDataUrl = hasFontsDir(fontsDir) ? fontsDir + sep : undefined;
 
       return { pdfjs, standardFontDataUrl };
     })();
   }
   return pdfjsPromise;
+}
+
+/**
+ * Point pdf.js at the fonts only if they are really there.
+ *
+ * On a host that bundles the code but not the package's data files, the
+ * directory is missing. Passing a path that does not exist makes pdf.js try to
+ * read file names under it and log "Unable to load font data" for each one -
+ * noise that also hides whether the directory was the problem. Passing
+ * undefined instead lets pdf.js fall back to its built-in fonts.
+ */
+function hasFontsDir(dir) {
+  try {
+    const present = existsSync(dir);
+    if (!present) {
+      console.warn(`[api] standard fonts not found at ${dir}; using built-in fonts`);
+    }
+    return present;
+  } catch (error) {
+    console.warn("[api] could not check the fonts directory:", error?.message);
+    return false;
+  }
 }
 
 export async function extractPdfText(buffer) {
@@ -46,21 +67,21 @@ export async function extractPdfText(buffer) {
   try {
     ({ pdfjs, standardFontDataUrl } = await loadPdfjs());
   } catch (error) {
-    // Not the resume's fault, so do not blame the resume.
+    // Not the resume's fault, so do not blame the resume. The cause is
+    // attached so the API can report it rather than hiding it.
     console.error("[api] could not load pdf.js:", error);
-    throw httpError("The PDF reader failed to start on the server.", 500);
+    const wrapped = httpError("The PDF reader failed to start on the server.", 500);
+    wrapped.cause = error;
+    throw wrapped;
   }
 
   let pdf;
 
   try {
-    pdf = await pdfjs.getDocument({
-      data: new Uint8Array(buffer),
-      standardFontDataUrl,
-      // No worker process: parsing is fast, and serverless hosts often do not
-      // allow spawning one.
-      disableWorker: true
-    }).promise;
+    const options = { data: new Uint8Array(buffer) };
+    if (standardFontDataUrl) options.standardFontDataUrl = standardFontDataUrl;
+
+    pdf = await pdfjs.getDocument(options).promise;
   } catch (error) {
     // The underlying error is logged rather than swallowed - the generic
     // message alone is what made this failure hard to diagnose.
