@@ -12,7 +12,18 @@ export async function connectDb() {
   mongoose.connection.on("error", (err) => console.error("[db] error:", err.message));
 
   try {
-    await mongoose.connect(config.mongoUri, { serverSelectionTimeoutMS: 5000 });
+    const connection = mongoose.connect(config.mongoUri, {
+      serverSelectionTimeoutMS: 3000,
+      connectTimeoutMS: 3000
+    });
+
+    await Promise.race([
+      connection,
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("MongoDB connection timed out.")), 4000);
+      })
+    ]);
+
     return true;
   } catch (err) {
     console.warn("[db] could not connect to MongoDB:", err.message);

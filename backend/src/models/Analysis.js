@@ -14,6 +14,11 @@ const analysisSchema = new mongoose.Schema(
     band: { type: String, required: true },
     matchedSkills: { type: [String], default: [] },
     missingSkills: { type: [String], default: [] },
+    education: { type: [String], default: [] },
+    experience: { type: [String], default: [] },
+    strengths: { type: [String], default: [] },
+    weaknesses: { type: [String], default: [] },
+    improvementSuggestions: { type: [String], default: [] },
     engine: { type: String, default: "keyword-v1" }
   },
   { timestamps: true }

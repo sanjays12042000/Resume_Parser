@@ -1,32 +1,46 @@
-1. Build a resume-parser landing page where users can upload a PDF resume and see a score, the skills they have, the skills they are missing, and suggestions for improving their resume.
-2. Build the website with React.
-3. Compare the uploaded PDF resume with a job description. Use keyword matching for now; AI analysis will be added.
-4. **Required:** Move the complete React application from `react/` into `frontend/`. Keep the frontend source, configuration, and frontend-specific scripts together there.
-5. **Required:** Create a `backend/` folder containing an Express server that accepts the PDF and job description, runs the comparison, and connects to MongoDB to save analyses. AI analysis remains out of scope until it is added later.
+# DECISION.md — AI Resume Parser
 
-backend folder should container server.js routes folder, controller folder, service folder, middleware folder and utils.js
+Build a complete AI Resume Parser and Resume Analyzer using the following technologies:
 
-below the format to AI ,lets connect and parse the resume and give the score
+- **Frontend:** React.js
+- **Backend:** Node.js and Express.js
+- **Database:** MongoDB
+- **AI:** Google Gemini API
 
-Quickstart: call labd from a program
-Send the conversation so far as messages, each a role (user or assistant) and its content, ending on the user's turn. labd answers once, in JSON: message.content is the reply and credits.percentLeft is what is left of your allowance. Nothing is remembered between requests, so send the earlier turns yourself when you want a conversation.
+## Requirements
 
-curl https://agent.thedevlabs.io/v1/api/chat \
-  -H "Authorization: Bearer $LABD_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":"Explain closures in one paragraph."}]}'
-const res = await fetch('https://agent.thedevlabs.io/v1/api/chat', {
-  method: 'POST',
-  headers: {
-    Authorization: `Bearer ${process.env.LABD_API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    messages: [{ role: 'user', content: 'Explain closures in one paragraph.' }],
-  }),
-});
-const { message, credits } = await res.json();
-console.log(message.content, `${credits.percentLeft}% left`);
-Keep the key on a server. labd does not answer browsers on other sites, so a key in a web page is a key anyone viewing it can copy and nothing you can use.
-401 the key is wrong or revoked · 402 the allowance is used up · 403 the API is switched off · 429 too many requests this minute, wait and retry.
-Every answer spends the same allowance as labd in the portal, your editor and your terminal.
+1. Allow users to upload their resumes in PDF format.
+2. Extract text and important information from resumes.
+3. Allow users to enter a job description.
+4. Use Gemini AI to analyze the resume against the job description.
+5. Display a resume match score from 0 to 100.
+6. Identify candidate skills, matching skills, and missing skills.
+7. Show education, experience, strengths, weaknesses, and improvement suggestions.
+8. Save and retrieve analysis results using MongoDB.
+9. Create a clean, modern, responsive React user interface.
+10. Connect the frontend and backend using REST APIs.
+11. Handle invalid files, API errors, and database errors properly.
+12. Keep the code clean, organized, and easy to maintain.
+
+## Environment Variables
+
+Store backend configuration in `backend/.env`:
+
+- `GEMINI_API_KEY`
+- `MONGODB_URI`
+- `PORT`
+- `FRONTEND_URL`
+
+Keep all secrets in the backend. Never expose API keys or database credentials in React code. Add `.env` to `.gitignore`.
+
+## Instructions for VS Code AI
+
+Read this file and inspect my existing project before writing code.
+
+Implement the project step by step. Reuse existing working code and do not overwrite files unnecessarily.
+
+Install the required dependencies, create the necessary files, implement all features, connect React with Express, integrate MongoDB and Gemini AI, and test the complete application.
+
+Provide working code and clear instructions for running the frontend and backend.
+
+Do not leave important features as placeholders. Fix errors and verify each feature before considering the project complete. 

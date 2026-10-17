@@ -1,9 +1,9 @@
 import { dbStatus } from "../src/config/db.js";
+import { config } from "../src/config/env.js";
 import { analyzeResume } from "../src/lib/scoring.js";
 import { Analysis } from "../src/models/Analysis.js";
 import { extractPdfText, httpError } from "../utils.js";
-import { config } from "../src/config/env.js";
-import { analyzeWithLabd } from "./labdService.js";
+import { analyzeWithGemini } from "./geminiService.js";
 
 export async function analyzeUploadedResume({ file, jobDescription }) {
   if (!file) {
@@ -21,7 +21,7 @@ export async function analyzeUploadedResume({ file, jobDescription }) {
     throw httpError("The job description must be 20,000 characters or fewer.", 413);
   }
 
-  if (file.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
+  if (!file.buffer || file.buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
     throw httpError("The uploaded file is not a valid PDF.", 400);
   }
 
@@ -33,9 +33,10 @@ export async function analyzeUploadedResume({ file, jobDescription }) {
     );
   }
 
-  const analysis = config.labdApiKey
-    ? await analyzeWithLabd(resumeText, normalizedJobDescription)
+  const analysis = config.geminiApiKey
+    ? await analyzeWithGemini(resumeText, normalizedJobDescription)
     : analyzeResume(resumeText, normalizedJobDescription);
+
   let saved = false;
 
   if (dbStatus() === "connected") {

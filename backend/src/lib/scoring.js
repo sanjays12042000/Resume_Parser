@@ -88,14 +88,75 @@ export function nextStepFor({ checks, missing, usingFallback }) {
  * The AI ranking step will slot in where `extractJobSkills` and `findSkill`
  * are called; everything downstream of them stays the same.
  */
+export function summarizeResumeAnalysis(resumeText, present = [], missing = []) {
+  const text = resumeText || "";
+  const education = [...new Set(
+    (text.split(/\n|\r\n|\.|;/)
+      .map((line) => line.trim())
+      .filter((line) => /\b(b\.?tech|bachelor|master|degree|diploma|university|college|education|school)\b/i.test(line)))
+      .slice(0, 5)
+  )];
+
+  const experience = [...new Set(
+    (text.split(/\n|\r\n|\.|;/)
+      .map((line) => line.trim())
+      .filter((line) => /\b(experience|developer|engineer|analyst|manager|intern|lead|worked|building|created|delivered|collaborated)\b/i.test(line)))
+      .slice(0, 5)
+  )];
+
+  const strengths = [];
+  if (present.length) {
+    strengths.push(...present.slice(0, 4).map((skill) => `${skill.name} is clearly reflected in the resume.`));
+  }
+  if (/\b(build|develop|improve|optimize|reduce|increase|deliver|lead|design|ship|create)\b/i.test(text)) {
+    strengths.push("The resume shows measurable, action-oriented impact statements.");
+  }
+  if (!strengths.length) {
+    strengths.push("The resume includes concrete technical and professional details.");
+  }
+
+  const weaknesses = [];
+  if (missing.length) {
+    weaknesses.push(`Missing skills: ${missing.slice(0, 3).map((skill) => skill.name).join(", ")}.`);
+  }
+  const checks = healthChecks(text);
+  const failedChecks = checks.filter((check) => !check.pass).map((check) => check.label);
+  if (failedChecks.length) {
+    weaknesses.push(`Resume structure could improve: ${failedChecks.slice(0, 3).join(", ")}.`);
+  }
+  if (!weaknesses.length) {
+    weaknesses.push("No major gaps were detected in the submission.");
+  }
+
+  const improvementSuggestions = [];
+  if (missing.length) {
+    improvementSuggestions.push(`Add concrete examples for ${missing.slice(0, 3).map((skill) => skill.name).join(", ")}.`);
+  }
+  if (!/\b(linkedin|github|portfolio|https?:\/\/)/i.test(text)) {
+    improvementSuggestions.push("Include a GitHub, LinkedIn, or portfolio link near the top of the resume.");
+  }
+  if (!/\b(education|b\.?tech|bachelor|master|degree|university|college)\b/i.test(text)) {
+    improvementSuggestions.push("Add a visible education section with degrees, institutions, and years.");
+  }
+  if (!improvementSuggestions.length) {
+    improvementSuggestions.push("Highlight your strongest project impact in a few concise bullet points for the target role.");
+  }
+
+  return {
+    education,
+    experience,
+    strengths: strengths.slice(0, 5),
+    weaknesses: weaknesses.slice(0, 5),
+    improvementSuggestions: improvementSuggestions.slice(0, 5)
+  };
+}
+
 export function analyzeResume(resumeText, jobDescription) {
   const resume = resumeText || "";
   const jd = jobDescription || "";
 
   const jobSkills = extractJobSkills(jd);
   const usingFallback = jobSkills.length === 0;
-  // A posting with no recognisable skills still deserves an answer, so fall
-  // back to a general list and say so in the next-step advice.
   const skills = usingFallback ? DEFAULT_SKILLS : jobSkills;
 
   const present = [];
@@ -114,7 +175,6 @@ export function analyzeResume(resumeText, jobDescription) {
     }
   }
 
-  // Heaviest gap first: the skill costing the most points is the one to fix.
   missing.sort((a, b) => b.weight - a.weight || a.name.localeCompare(b.name));
 
   const skillPct = total ? earned / total : 0;
@@ -137,7 +197,8 @@ export function analyzeResume(resumeText, jobDescription) {
     usingFallback,
     nextStep: nextStepFor({ checks, missing, usingFallback }),
     engine: "keyword-v1",
-    analyzedAt: new Date().toISOString()
+    analyzedAt: new Date().toISOString(),
+    ...summarizeResumeAnalysis(resume, present, missing)
   };
 }
 
